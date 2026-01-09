@@ -147,7 +147,9 @@ export default function ClientVehicleManager() {
         body: JSON.stringify(payload),
       });
 
-      if (!response.ok) throw new Error("Error creating client");
+      const data = await response.json();
+
+      if (!response.ok) throw new Error(data.error || "Error creating client");
 
       toast.success("Cliente creado exitosamente");
       await fetchClients();
@@ -155,7 +157,9 @@ export default function ClientVehicleManager() {
       setClientModalOpen(false);
     } catch (error) {
       console.error("Error en handleClientSubmit:", error);
-      toast.error("Error al crear el cliente");
+      toast.error(
+        error instanceof Error ? error.message : "Ha ocurrido un error interno"
+      );
     }
   };
 
@@ -180,14 +184,18 @@ export default function ClientVehicleManager() {
         }
       );
 
-      if (!response.ok) throw new Error("Error updating contact");
+      const data = await response.json();
+
+      if (!response.ok) throw new Error(data.error || "Error updating contact");
 
       toast.success("Contacto actualizado exitosamente");
       await fetchClients();
       setContactModalOpen(false);
     } catch (error) {
       console.error("Error en handleContactSubmit:", error);
-      toast.error("Error al actualizar el contacto");
+      toast.error(
+        error instanceof Error ? error.message : "Ha ocurrido un error interno"
+      );
     }
   };
 
@@ -215,7 +223,10 @@ export default function ClientVehicleManager() {
           }
         );
 
-        if (!response.ok) throw new Error("Error updating vehicle");
+        const data = await response.json();
+
+        if (!response.ok)
+          throw new Error(data.error || "Error updating vehicle");
 
         toast.success("Vehículo actualizado exitosamente");
       } else {
@@ -237,7 +248,10 @@ export default function ClientVehicleManager() {
           body: JSON.stringify(payload),
         });
 
-        if (!response.ok) throw new Error("Error creating vehicle");
+        const data = await response.json();
+
+        if (!response.ok)
+          throw new Error(data.error || "Error creating vehicle");
 
         toast.success("Vehículo creado exitosamente");
       }
@@ -248,7 +262,9 @@ export default function ClientVehicleManager() {
       setVehicleModalOpen(false);
     } catch (error) {
       console.error("Error en handleVehicleSubmit:", error);
-      toast.error("Error al guardar el vehículo");
+      toast.error(
+        error instanceof Error ? error.message : "Ha ocurrido un error interno"
+      );
     }
   };
 
@@ -261,7 +277,9 @@ export default function ClientVehicleManager() {
           { method: "DELETE" }
         );
 
-        if (!response.ok) throw new Error("Error deleting client");
+        const data = await response.json();
+
+        if (!response.ok) throw new Error(data.error || "Error deleting client");
 
         toast.success("Cliente eliminado exitosamente");
         await fetchClients();
@@ -272,7 +290,9 @@ export default function ClientVehicleManager() {
           { method: "DELETE" }
         );
 
-        if (!response.ok) throw new Error("Error deleting vehicle");
+        const data = await response.json();
+
+        if (!response.ok) throw new Error(data.error || "Error deleting vehicle");
 
         toast.success("Vehículo eliminado exitosamente");
         await fetchVehicles();
@@ -283,7 +303,9 @@ export default function ClientVehicleManager() {
       setDeleteTarget(null);
     } catch (error) {
       console.error("Error en handleDelete:", error);
-      toast.error("Error al eliminar");
+      toast.error(
+        error instanceof Error ? error.message : "Ha ocurrido un error interno"
+      );
     }
   };
 

@@ -21,6 +21,7 @@ import {
   RefreshCw,
   GripVertical,
   Download,
+  User,
 } from "lucide-react";
 
 import {
@@ -72,6 +73,8 @@ import {
 } from "@/components/ui/sheet";
 import { exportToExcel } from "./documentsExport/excel";
 import { apiFetch } from "@/app/frontend/utils/apiFetch";
+import { GetSession } from "@/app/backend/types/models/entity";
+import { toast } from "sonner";
 
 type AppointmentState = "ASIGNADA" | "COMPLETADA" | "PENDIENTE" | "CANCELADA";
 
@@ -84,7 +87,7 @@ interface Client {
 
 interface AppointmentItem {
   id: number;
-  appointmentDate: Date | string; // Changed from just Date
+  appointmentDate: Date | string;
   ubicacion: string;
   appointmentState: AppointmentState;
   details: string | null;
@@ -116,24 +119,25 @@ const StatusBadge: React.FC<StatusBadgeProps> = ({ status }) => {
     ASIGNADA: {
       icon: CheckCircle2,
       className:
-        "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400",
+        "bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/50 dark:text-blue-400 dark:border-blue-900",
       label: "Asignada",
     },
     COMPLETADA: {
       icon: CheckCircle2,
       className:
-        "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400",
+        "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/50 dark:text-emerald-400 dark:border-emerald-900",
       label: "Completada",
     },
     PENDIENTE: {
       icon: Clock,
       className:
-        "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400",
+        "bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/50 dark:text-amber-400 dark:border-amber-900",
       label: "Pendiente",
     },
     CANCELADA: {
       icon: AlertCircle,
-      className: "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400",
+      className:
+        "bg-red-50 text-red-700 border-red-200 dark:bg-red-950/50 dark:text-red-400 dark:border-red-900",
       label: "Cancelada",
     },
   };
@@ -141,7 +145,7 @@ const StatusBadge: React.FC<StatusBadgeProps> = ({ status }) => {
   const { icon: Icon, className, label } = config[status];
 
   return (
-    <Badge variant="secondary" className={`gap-1.5 ${className}`}>
+    <Badge variant="outline" className={`gap-1.5 font-medium ${className}`}>
       <Icon className="h-3.5 w-3.5 flex-shrink-0" />
       {label}
     </Badge>
@@ -182,8 +186,7 @@ const TableRow: React.FC<TableRowProps> = ({
     if (dateInput instanceof Date) {
       date = dateInput;
     } else {
-      // Remover la 'Z' para interpretar como hora local colombiana
-      const localDateString = dateInput.replace("Z", "");
+      const localDateString = dateInput.replace("col", "");
       date = new Date(localDateString);
     }
 
@@ -196,20 +199,25 @@ const TableRow: React.FC<TableRowProps> = ({
 
   return (
     <tr
-      className={`border-b transition-colors hover:bg-muted/50 ${isSelected ? "bg-muted" : ""}`}
+      className={cn(
+        "border-b border-border transition-all hover:bg-muted/60",
+        isSelected && "bg-muted/80"
+      )}
     >
-      <td className="px-4 py-3">
+      <td className="px-4 py-3.5">
         <Checkbox
           checked={isSelected}
           onCheckedChange={() => onToggleSelect(item.id)}
           aria-label={`Select ${item.author.fullName}`}
         />
       </td>
-      <td className="px-4 py-3">
-        <div className="flex items-center gap-2">
-          <GripVertical className="h-4 w-4 flex-shrink-0 text-muted-foreground" />
+      <td className="px-4 py-3.5">
+        <div className="flex items-center gap-3">
+          <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10">
+            <User className="h-4 w-4 text-primary" />
+          </div>
           <div className="flex flex-col">
-            <span className="text-sm font-medium">
+            <span className="text-sm font-semibold">
               {item.author.fullName} {item.author.fullSurname}
             </span>
             <span className="text-xs text-muted-foreground">
@@ -218,9 +226,11 @@ const TableRow: React.FC<TableRowProps> = ({
           </div>
         </div>
       </td>
-      <td className="px-4 py-3">
-        <div className="flex items-center gap-2">
-          <Calendar className="h-4 w-4 text-muted-foreground" />
+      <td className="px-4 py-3.5">
+        <div className="flex items-center gap-2.5">
+          <div className="flex h-8 w-8 items-center justify-center rounded-md bg-muted">
+            <Calendar className="h-4 w-4 text-muted-foreground" />
+          </div>
           <div className="flex flex-col">
             <span className="text-sm font-medium">
               {formatDate(item.appointmentDate)}
@@ -231,20 +241,22 @@ const TableRow: React.FC<TableRowProps> = ({
           </div>
         </div>
       </td>
-      <td className="px-4 py-3">
-        <div className="flex items-center gap-2">
-          <MapPin className="h-4 w-4 text-muted-foreground" />
-          <span className="text-sm">{item.ubicacion}</span>
+      <td className="px-4 py-3.5">
+        <div className="flex items-center gap-2.5">
+          <div className="flex h-8 w-8 items-center justify-center rounded-md bg-muted">
+            <MapPin className="h-4 w-4 text-muted-foreground" />
+          </div>
+          <span className="text-sm font-medium">{item.ubicacion}</span>
         </div>
       </td>
-      <td className="px-4 py-3">
+      <td className="px-4 py-3.5">
         <StatusBadge status={item.appointmentState} />
       </td>
-      <td className="px-4 py-3">
+      <td className="px-4 py-3.5">
         <div className="flex flex-col">
           {item.employedAuthor ? (
             <>
-              <span className="text-sm font-medium">
+              <span className="text-sm font-semibold">
                 {item.employedAuthor.name}
               </span>
               <span className="text-xs text-muted-foreground">
@@ -252,23 +264,33 @@ const TableRow: React.FC<TableRowProps> = ({
               </span>
             </>
           ) : (
-            <span className="text-xs text-muted-foreground">Sin asignar</span>
+            <span className="text-xs text-muted-foreground italic">
+              Sin asignar
+            </span>
           )}
         </div>
       </td>
-      <td className="px-4 py-3">
+      <td className="px-4 py-3.5">
         <span className="text-sm text-muted-foreground line-clamp-2">
-          {item.details || "Sin detalles"}
+          {item.details || (
+            <span className="italic text-muted-foreground/70">
+              Sin detalles
+            </span>
+          )}
         </span>
       </td>
-      <td className="px-4 py-3 text-right">
+      <td className="px-4 py-3.5 text-right">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-9 w-9 p-0 hover:bg-muted"
+            >
               <MoreVertical className="h-4 w-4" />
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
+          <DropdownMenuContent align="end" className="w-48">
             <DropdownMenuItem onClick={() => onEdit(item)}>
               Ver/Editar Detalles
             </DropdownMenuItem>
@@ -286,7 +308,7 @@ const TableRow: React.FC<TableRowProps> = ({
               )}
             <DropdownMenuItem
               onClick={() => onDelete(item.id)}
-              className="text-red-600 focus:text-red-600"
+              className="text-red-600 focus:text-red-600 dark:text-red-400"
             >
               Eliminar Cita
             </DropdownMenuItem>
@@ -300,8 +322,10 @@ const TableRow: React.FC<TableRowProps> = ({
 const AppointmentsTable: React.FC = () => {
   const [data, setData] = useState<AppointmentItem[]>([]);
   const [clients, setClients] = useState<Client[]>([]);
+  const [employeds, setEmployeds] = useState<GetSession[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadingClients, setLoadingClients] = useState(false);
+  const [loadingEmployed, setLoadingEmployed] = useState(false);
   const [currentPage, setCurrentPage] = useState(0);
   const [selected, setSelected] = useState<Set<number>>(new Set());
   const [searchTerm, setSearchTerm] = useState("");
@@ -327,6 +351,7 @@ const AppointmentsTable: React.FC = () => {
     clientId: "",
     clientName: "",
     employedId: "",
+    employedName: "",
     appointmentDate: "",
     appointmentTime: "",
     ubicacion: "",
@@ -334,6 +359,7 @@ const AppointmentsTable: React.FC = () => {
   });
   const [creating, setCreating] = useState(false);
   const [openClientCombobox, setOpenClientCombobox] = useState(false);
+  const [openEmployedCombobox, setOpenEmployedCombobox] = useState(false);
 
   // Estado para confirmación de eliminación
   const [deleteDialog, setDeleteDialog] = useState(false);
@@ -348,7 +374,7 @@ const AppointmentsTable: React.FC = () => {
   const fetchAppointments = async () => {
     try {
       setLoading(true);
-      const response = await apiFetch("/appointment");
+      const response = await apiFetch("appointment");
 
       if (!response.ok) {
         throw new Error("Error al cargar las citas");
@@ -358,7 +384,7 @@ const AppointmentsTable: React.FC = () => {
       setData(appointments);
     } catch (error) {
       console.error("Error fetching appointments:", error);
-      alert("Error al cargar las citas");
+      toast.error("Error al cargar las citas");
     } finally {
       setLoading(false);
     }
@@ -368,7 +394,7 @@ const AppointmentsTable: React.FC = () => {
   const fetchClients = async () => {
     try {
       setLoadingClients(true);
-      const response = await apiFetch("/clientPage");
+      const response = await apiFetch("clientPage");
 
       if (!response.ok) {
         throw new Error("Error al cargar los clientes");
@@ -378,10 +404,48 @@ const AppointmentsTable: React.FC = () => {
       setClients(clientsData);
     } catch (error) {
       console.error("Error fetching clients:", error);
-      alert("Error al cargar la lista de clientes");
+      toast.error("Error al cargar la lista de clientes");
     } finally {
       setLoadingClients(false);
     }
+  };
+
+  const fetchEmployed = async () => {
+    try {
+      setLoadingEmployed(true);
+      const response = await apiFetch("user");
+
+      if (!response.ok) {
+        throw new Error("Error al cargar empleados");
+      }
+
+      const employedData = await response.json();
+      setEmployeds(employedData);
+    } catch (error) {
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Error al cargar la lista de empleados"
+      );
+    } finally {
+      setLoadingEmployed(false);
+    }
+  };
+
+  useEffect(() => {
+    if (createDialog) {
+      fetchEmployed();
+    }
+  }, [createDialog]);
+
+  const filterEmployeds = (searchQuery: string) => {
+    if (!searchQuery) return employeds;
+
+    return employeds.filter(
+      (employed) =>
+        employed.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        employed.identificacion.includes(searchQuery)
+    );
   };
 
   // Efecto para cargar clientes cuando se abre el diálogo de creación
@@ -474,16 +538,13 @@ const AppointmentsTable: React.FC = () => {
         };
       }
 
-      const response = await apiFetch(
-        `/appointment/${editingItem.id}`,
-        {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(updateData),
-        }
-      );
+      const response = await apiFetch(`appointment/${editingItem.id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(updateData),
+      });
 
       if (!response.ok) {
         throw new Error("Error al actualizar la cita");
@@ -492,9 +553,10 @@ const AppointmentsTable: React.FC = () => {
       await fetchAppointments();
       setEditDialog(false);
       setEditingItem(null);
+      toast.success("Cita actualizada correctamente");
     } catch (error) {
       console.error("Error updating appointment:", error);
-      alert("Error al actualizar la cita");
+      toast.error("Error al actualizar la cita");
     } finally {
       setSaving(false);
     }
@@ -507,7 +569,7 @@ const AppointmentsTable: React.FC = () => {
       !createFormData.appointmentTime ||
       !createFormData.ubicacion
     ) {
-      alert("Por favor completa todos los campos obligatorios");
+      toast.error("Por favor completa todos los campos obligatorios");
       return;
     }
 
@@ -527,7 +589,7 @@ const AppointmentsTable: React.FC = () => {
         details: createFormData.details || undefined,
       };
 
-      const response = await apiFetch("/appointment", {
+      const response = await apiFetch("appointment", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -545,14 +607,16 @@ const AppointmentsTable: React.FC = () => {
         clientId: "",
         clientName: "",
         employedId: "",
+        employedName: "",
         appointmentDate: "",
         appointmentTime: "",
         ubicacion: "",
         details: "",
       });
+      toast.success("Cita creada exitosamente");
     } catch (error) {
       console.error("Error creating appointment:", error);
-      alert("Error al crear la cita");
+      toast.error("Error al crear la cita");
     } finally {
       setCreating(false);
     }
@@ -560,7 +624,7 @@ const AppointmentsTable: React.FC = () => {
 
   const handleCancel = async (id: number) => {
     try {
-      const response = await apiFetch(`/appointment/${id}`, {
+      const response = await apiFetch(`appointment/${id}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -575,15 +639,16 @@ const AppointmentsTable: React.FC = () => {
       }
 
       await fetchAppointments();
+      toast.success("Cita cancelada");
     } catch (error) {
       console.error("Error canceling appointment:", error);
-      alert("Error al cancelar la cita");
+      toast.error("Error al cancelar la cita");
     }
   };
 
   const handleComplete = async (id: number) => {
     try {
-      const response = await apiFetch(`/appointment/${id}`, {
+      const response = await apiFetch(`appointment/${id}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -598,9 +663,10 @@ const AppointmentsTable: React.FC = () => {
       }
 
       await fetchAppointments();
+      toast.success("Cita completada");
     } catch (error) {
       console.error("Error completing appointment:", error);
-      alert("Error al completar la cita");
+      toast.error("Error al completar la cita");
     }
   };
 
@@ -614,12 +680,9 @@ const AppointmentsTable: React.FC = () => {
 
     try {
       setDeleting(true);
-      const response = await apiFetch(
-        `/appointment/${deletingId}`,
-        {
-          method: "DELETE",
-        }
-      );
+      const response = await apiFetch(`appointment/${deletingId}`, {
+        method: "DELETE",
+      });
 
       if (!response.ok) {
         throw new Error("Error al eliminar la cita");
@@ -628,9 +691,10 @@ const AppointmentsTable: React.FC = () => {
       await fetchAppointments();
       setDeleteDialog(false);
       setDeletingId(null);
+      toast.success("Cita eliminada");
     } catch (error) {
       console.error("Error deleting appointment:", error);
-      alert("Error al eliminar la cita");
+      toast.error("Error al eliminar la cita");
     } finally {
       setDeleting(false);
     }
@@ -655,17 +719,14 @@ const AppointmentsTable: React.FC = () => {
 
   const handleExportExcel = async () => {
     const exportData = filteredData.map((appointment) => {
-      // 1. Extraer datos del cliente (author)
       const clienteNombre = appointment.author?.fullName || "";
       const clienteApellido = appointment.author?.fullSurname || "";
       const clienteCedula = appointment.author?.identified || "";
 
-      // 2. Extraer datos del trabajador (employedAuthor)
       const mecanicoNombre = appointment.employedAuthor?.name || "";
       const mecanicoCedula = appointment.employedAuthor?.identificacion || "";
       const mecanicoRol = appointment.employedAuthor?.role || "";
 
-      // 3. Retornar objeto transformado
       return {
         id: appointment.id,
         fecha: appointment.appointmentDate,
@@ -785,38 +846,58 @@ const AppointmentsTable: React.FC = () => {
     return (
       <div className="w-full min-h-screen bg-background flex items-center justify-center">
         <div className="flex flex-col items-center gap-4">
-          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-          <p className="text-muted-foreground">Cargando citas...</p>
+          <Loader2 className="h-10 w-10 animate-spin text-primary" />
+          <p className="text-sm text-muted-foreground font-medium">
+            Cargando citas...
+          </p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="w-full min-h-screen bg-background p-4 sm:p-6 lg:p-8">
+    <div className="w-full min-h-screen bg-gradient-to-br from-background via-background to-muted/20 p-4 sm:p-6 lg:p-8">
       <div className="mx-auto max-w-7xl">
-        {/* Header - Responsive */}
+        {/* Header */}
         <div className="mb-6 sm:mb-8">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
-              <h1 className="text-2xl sm:text-3xl font-semibold">
+              <h1 className="text-3xl sm:text-4xl font-bold bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
                 Gestión de Citas
               </h1>
-              <p className="mt-1 text-sm text-muted-foreground">
-                Administra las citas de tus clientes - {data.length} citas
+              <p className="mt-2 text-sm text-muted-foreground">
+                Administra las citas de tus clientes •{" "}
+                <span className="font-semibold text-foreground">
+                  {data.length}
+                </span>{" "}
+                citas registradas
               </p>
             </div>
 
             {/* Botones principales - Desktop */}
             <div className="hidden lg:flex gap-2">
-              <Button variant="outline" size="sm" onClick={fetchAppointments}>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={fetchAppointments}
+                className="hover:bg-primary/10"
+              >
                 <RefreshCw className="h-4 w-4" />
               </Button>
-              <Button onClick={() => setCreateDialog(true)} size="sm">
+              <Button
+                onClick={() => setCreateDialog(true)}
+                size="sm"
+                className="shadow-sm"
+              >
                 <Plus className="h-4 w-4 mr-2" />
                 Nueva Cita
               </Button>
-              <Button variant="outline" onClick={handleExportExcel} size="sm">
+              <Button
+                variant="outline"
+                onClick={handleExportExcel}
+                size="sm"
+                className="hover:bg-primary/10"
+              >
                 <Download className="h-4 w-4 mr-2" />
                 Exportar Excel
               </Button>
@@ -827,7 +908,7 @@ const AppointmentsTable: React.FC = () => {
               <Button
                 onClick={() => setCreateDialog(true)}
                 size="sm"
-                className="flex-1"
+                className="flex-1 shadow-sm"
               >
                 <Plus className="h-4 w-4 mr-2" />
                 Nueva Cita
@@ -857,7 +938,7 @@ const AppointmentsTable: React.FC = () => {
                       className="w-full justify-start"
                     >
                       <Download className="h-4 w-4 mr-2" />
-                      Export Excel
+                      Exportar Excel
                     </Button>
                   </div>
                 </SheetContent>
@@ -867,87 +948,101 @@ const AppointmentsTable: React.FC = () => {
         </div>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 md:gap-4 mb-4 md:mb-6">
-          <Card>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 md:gap-4 mb-6">
+          <Card className="border-border/50 shadow-sm hover:shadow-md transition-shadow">
             <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-              <CardTitle className="text-xs md:text-sm font-medium">
+              <CardTitle className="text-xs md:text-sm font-semibold">
                 Total
               </CardTitle>
-              <CheckCheck className="h-3.5 w-3.5 md:h-4 md:w-4 text-muted-foreground" />
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-100 dark:bg-slate-800">
+                <CheckCheck className="h-4 w-4 text-slate-600 dark:text-slate-400" />
+              </div>
             </CardHeader>
             <CardContent>
-              <div className="text-xl md:text-2xl font-bold">{stats.total}</div>
-              <p className="text-xs text-muted-foreground">Citas registradas</p>
+              <div className="text-2xl md:text-3xl font-bold">
+                {stats.total}
+              </div>
+              <p className="text-xs text-muted-foreground mt-1">
+                Citas registradas
+              </p>
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="border-blue-200/50 shadow-sm hover:shadow-md transition-shadow dark:border-blue-900/50">
             <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-              <CardTitle className="text-xs md:text-sm font-medium">
+              <CardTitle className="text-xs md:text-sm font-semibold">
                 Asignadas
               </CardTitle>
-              <CheckCircle2 className="h-3.5 w-3.5 md:h-4 md:w-4 text-blue-600 dark:text-blue-400" />
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-100 dark:bg-blue-900/30">
+                <CheckCircle2 className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+              </div>
             </CardHeader>
             <CardContent>
-              <div className="text-xl md:text-2xl font-bold text-blue-600 dark:text-blue-400">
+              <div className="text-2xl md:text-3xl font-bold text-blue-600 dark:text-blue-400">
                 {stats.asignadas}
               </div>
-              <p className="text-xs text-muted-foreground">En proceso</p>
+              <p className="text-xs text-muted-foreground mt-1">En proceso</p>
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="border-amber-200/50 shadow-sm hover:shadow-md transition-shadow dark:border-amber-900/50">
             <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-              <CardTitle className="text-xs md:text-sm font-medium">
+              <CardTitle className="text-xs md:text-sm font-semibold">
                 Pendientes
               </CardTitle>
-              <Clock className="h-3.5 w-3.5 md:h-4 md:w-4 text-amber-600 dark:text-amber-400" />
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-amber-100 dark:bg-amber-900/30">
+                <Clock className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+              </div>
             </CardHeader>
             <CardContent>
-              <div className="text-xl md:text-2xl font-bold text-amber-600 dark:text-amber-400">
+              <div className="text-2xl md:text-3xl font-bold text-amber-600 dark:text-amber-400">
                 {stats.pendientes}
               </div>
-              <p className="text-xs text-muted-foreground">Por asignar</p>
+              <p className="text-xs text-muted-foreground mt-1">Por asignar</p>
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="border-emerald-200/50 shadow-sm hover:shadow-md transition-shadow dark:border-emerald-900/50">
             <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-              <CardTitle className="text-xs md:text-sm font-medium">
+              <CardTitle className="text-xs md:text-sm font-semibold">
                 Completadas
               </CardTitle>
-              <CheckCircle2 className="h-3.5 w-3.5 md:h-4 md:w-4 text-green-600 dark:text-green-400" />
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-100 dark:bg-emerald-900/30">
+                <CheckCircle2 className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+              </div>
             </CardHeader>
             <CardContent>
-              <div className="text-xl md:text-2xl font-bold text-green-600 dark:text-green-400">
+              <div className="text-2xl md:text-3xl font-bold text-emerald-600 dark:text-emerald-400">
                 {stats.completadas}
               </div>
-              <p className="text-xs text-muted-foreground">Finalizadas</p>
+              <p className="text-xs text-muted-foreground mt-1">Finalizadas</p>
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="border-red-200/50 shadow-sm hover:shadow-md transition-shadow dark:border-red-900/50">
             <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-              <CardTitle className="text-xs md:text-sm font-medium">
+              <CardTitle className="text-xs md:text-sm font-semibold">
                 Canceladas
               </CardTitle>
-              <AlertCircle className="h-3.5 w-3.5 md:h-4 md:w-4 text-red-600 dark:text-red-400" />
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-red-100 dark:bg-red-900/30">
+                <AlertCircle className="h-4 w-4 text-red-600 dark:text-red-400" />
+              </div>
             </CardHeader>
             <CardContent>
-              <div className="text-xl md:text-2xl font-bold text-red-600 dark:text-red-400">
+              <div className="text-2xl md:text-3xl font-bold text-red-600 dark:text-red-400">
                 {stats.canceladas}
               </div>
-              <p className="text-xs text-muted-foreground">Anuladas</p>
+              <p className="text-xs text-muted-foreground mt-1">Anuladas</p>
             </CardContent>
           </Card>
         </div>
 
         {/* Búsqueda y filtros */}
-        <Card className="mb-4 md:mb-6">
-          <CardContent className="p-3 md:p-4">
-            <div className="flex flex-col gap-3 md:gap-4 md:flex-row md:items-end">
+        <Card className="mb-6 border-border/50 shadow-sm">
+          <CardContent className="p-4 md:p-6">
+            <div className="flex flex-col gap-4 md:flex-row md:items-end">
               <div className="flex-1">
-                <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2">
+                <label className="block text-xs font-bold uppercase tracking-wider text-muted-foreground mb-2">
                   Buscar
                 </label>
                 <div className="relative">
@@ -960,13 +1055,13 @@ const AppointmentsTable: React.FC = () => {
                       setSearchTerm(e.target.value);
                       setCurrentPage(0);
                     }}
-                    className="pl-10"
+                    className="pl-10 h-10"
                   />
                 </div>
               </div>
 
-              <div className="w-full md:w-48">
-                <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2">
+              <div className="w-full md:w-52">
+                <label className="block text-xs font-bold uppercase tracking-wider text-muted-foreground mb-2">
                   Estado
                 </label>
                 <Select
@@ -976,7 +1071,7 @@ const AppointmentsTable: React.FC = () => {
                     setCurrentPage(0);
                   }}
                 >
-                  <SelectTrigger>
+                  <SelectTrigger className="h-10">
                     <SelectValue placeholder="Todos los estados" />
                   </SelectTrigger>
                   <SelectContent>
@@ -989,8 +1084,8 @@ const AppointmentsTable: React.FC = () => {
                 </Select>
               </div>
 
-              <div className="w-full md:w-48">
-                <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2">
+              <div className="w-full md:w-52">
+                <label className="block text-xs font-bold uppercase tracking-wider text-muted-foreground mb-2">
                   Ubicación
                 </label>
                 <Select
@@ -1000,7 +1095,7 @@ const AppointmentsTable: React.FC = () => {
                     setCurrentPage(0);
                   }}
                 >
-                  <SelectTrigger>
+                  <SelectTrigger className="h-10">
                     <SelectValue placeholder="Todas las ubicaciones" />
                   </SelectTrigger>
                   <SelectContent>
@@ -1015,7 +1110,7 @@ const AppointmentsTable: React.FC = () => {
               </div>
 
               <div className="w-full md:w-auto">
-                <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2 md:opacity-0">
+                <label className="block text-xs font-bold uppercase tracking-wider text-muted-foreground mb-2 md:opacity-0">
                   Limpiar
                 </label>
                 <Button
@@ -1026,7 +1121,7 @@ const AppointmentsTable: React.FC = () => {
                     setFilterLocation("all");
                     setCurrentPage(0);
                   }}
-                  className="w-full md:w-auto"
+                  className="w-full md:w-auto h-10"
                 >
                   Limpiar Filtros
                 </Button>
@@ -1036,11 +1131,11 @@ const AppointmentsTable: React.FC = () => {
         </Card>
 
         {/* Vista de tabla para desktop */}
-        <div className="hidden md:block overflow-hidden rounded-lg border">
+        <div className="hidden md:block overflow-hidden rounded-xl border border-border/50 shadow-sm bg-card">
           <table className="w-full">
             <thead>
-              <tr className="border-b bg-muted/50">
-                <th className="w-12 px-4 py-3">
+              <tr className="border-b bg-muted/30">
+                <th className="w-12 px-4 py-4">
                   <Checkbox
                     checked={
                       selected.size === paginatedData.length &&
@@ -1050,51 +1145,59 @@ const AppointmentsTable: React.FC = () => {
                     aria-label="Select all items"
                   />
                 </th>
-                <th className="px-4 py-3 text-left">
-                  <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                <th className="px-4 py-4 text-left">
+                  <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
                     Cliente
                   </span>
                 </th>
-                <th className="px-4 py-3 text-left">
-                  <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                <th className="px-4 py-4 text-left">
+                  <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
                     Fecha y Hora
                   </span>
                 </th>
-                <th className="px-4 py-3 text-left">
-                  <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                <th className="px-4 py-4 text-left">
+                  <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
                     Ubicación
                   </span>
                 </th>
-                <th className="px-4 py-3 text-left">
-                  <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                <th className="px-4 py-4 text-left">
+                  <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
                     Estado
                   </span>
                 </th>
-                <th className="px-4 py-3 text-left">
-                  <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                <th className="px-4 py-4 text-left">
+                  <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
                     Empleado Asignado
                   </span>
                 </th>
-                <th className="px-4 py-3 text-left">
-                  <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                <th className="px-4 py-4 text-left">
+                  <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
                     Detalles
                   </span>
                 </th>
-                <th className="px-4 py-3 text-right">
-                  <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                <th className="px-4 py-4 text-right">
+                  <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
                     Acciones
                   </span>
                 </th>
               </tr>
             </thead>
-            <tbody>
+            <tbody className="bg-card">
               {paginatedData.length === 0 ? (
                 <tr>
                   <td
                     colSpan={8}
-                    className="px-4 py-12 text-center text-muted-foreground"
+                    className="px-4 py-16 text-center text-muted-foreground"
                   >
-                    No hay citas registradas
+                    <div className="flex flex-col items-center gap-3">
+                      <div className="rounded-full bg-muted p-4">
+                        <Calendar className="h-8 w-8 text-muted-foreground" />
+                      </div>
+                      <p className="font-medium">No hay citas registradas</p>
+                      <p className="text-sm">
+                        Crea una nueva cita para comenzar
+                      </p>
+                    </div>
                   </td>
                 </tr>
               ) : (
@@ -1118,18 +1221,30 @@ const AppointmentsTable: React.FC = () => {
         {/* Vista de tarjetas para móvil */}
         <div className="md:hidden space-y-3">
           {paginatedData.length === 0 ? (
-            <Card>
-              <CardContent className="py-12 text-center text-muted-foreground">
-                No hay citas registradas
+            <Card className="border-border/50 shadow-sm">
+              <CardContent className="py-16 text-center">
+                <div className="flex flex-col items-center gap-3">
+                  <div className="rounded-full bg-muted p-4">
+                    <Calendar className="h-8 w-8 text-muted-foreground" />
+                  </div>
+                  <p className="font-semibold text-foreground">
+                    No hay citas registradas
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    Crea una nueva cita para comenzar
+                  </p>
+                </div>
               </CardContent>
             </Card>
           ) : (
             paginatedData.map((item) => (
               <Card
                 key={item.id}
-                className={
-                  selected.has(item.id) ? "border-primary bg-muted" : ""
-                }
+                className={cn(
+                  "border-border/50 shadow-sm transition-all hover:shadow-md",
+                  selected.has(item.id) &&
+                    "border-primary bg-primary/5 ring-1 ring-primary/20"
+                )}
               >
                 <CardContent className="p-4">
                   <div className="flex items-start justify-between mb-3">
@@ -1146,18 +1261,20 @@ const AppointmentsTable: React.FC = () => {
                         <p className="text-xs text-muted-foreground mb-2">
                           ID: {item.author.identified}
                         </p>
-                        <div className="flex flex-wrap gap-2 mb-2">
-                          <div className="flex items-center gap-1 text-xs">
+                        <div className="flex flex-wrap gap-2 mb-3">
+                          <div className="flex items-center gap-1.5 text-xs bg-muted px-2 py-1 rounded-md">
                             <Calendar className="h-3 w-3 text-muted-foreground" />
-                            <span>
+                            <span className="font-medium">
                               {new Date(
                                 item.appointmentDate
                               ).toLocaleDateString("es-ES")}
                             </span>
                           </div>
-                          <div className="flex items-center gap-1 text-xs">
+                          <div className="flex items-center gap-1.5 text-xs bg-muted px-2 py-1 rounded-md">
                             <MapPin className="h-3 w-3 text-muted-foreground" />
-                            <span>{item.ubicacion}</span>
+                            <span className="font-medium">
+                              {item.ubicacion}
+                            </span>
                           </div>
                         </div>
                         <StatusBadge status={item.appointmentState} />
@@ -1173,7 +1290,7 @@ const AppointmentsTable: React.FC = () => {
                           <MoreVertical className="h-4 w-4" />
                         </Button>
                       </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
+                      <DropdownMenuContent align="end" className="w-48">
                         <DropdownMenuItem onClick={() => handleEdit(item)}>
                           Ver/Editar
                         </DropdownMenuItem>
@@ -1195,7 +1312,7 @@ const AppointmentsTable: React.FC = () => {
                           )}
                         <DropdownMenuItem
                           onClick={() => handleDeleteClick(item.id)}
-                          className="text-red-600 focus:text-red-600"
+                          className="text-red-600 focus:text-red-600 dark:text-red-400"
                         >
                           Eliminar
                         </DropdownMenuItem>
@@ -1213,17 +1330,23 @@ const AppointmentsTable: React.FC = () => {
           )}
         </div>
 
-        <div className="mt-4 md:mt-6 flex flex-col sm:flex-row items-center justify-between gap-3">
-          <span className="text-xs md:text-sm text-muted-foreground">
-            {selected.size} de {filteredData.length} seleccionados
+        {/* Paginación */}
+        <div className="mt-6 flex flex-col sm:flex-row items-center justify-between gap-4 px-2">
+          <span className="text-xs md:text-sm text-muted-foreground font-medium">
+            <span className="font-bold text-foreground">{selected.size}</span>{" "}
+            de{" "}
+            <span className="font-bold text-foreground">
+              {filteredData.length}
+            </span>{" "}
+            seleccionados
           </span>
-          <div className="flex items-center gap-1 md:gap-2">
+          <div className="flex items-center gap-2">
             <Button
               variant="outline"
               size="sm"
               onClick={() => handlePageChange(0)}
               disabled={currentPage === 0}
-              className="h-8 w-8 p-0"
+              className="h-9 w-9 p-0"
             >
               <ChevronsLeft className="h-4 w-4" />
             </Button>
@@ -1232,19 +1355,21 @@ const AppointmentsTable: React.FC = () => {
               size="sm"
               onClick={() => handlePageChange(currentPage - 1)}
               disabled={currentPage === 0}
-              className="h-8 w-8 p-0"
+              className="h-9 w-9 p-0"
             >
               <ChevronLeft className="h-4 w-4" />
             </Button>
-            <span className="px-2 md:px-3 text-xs md:text-sm font-medium whitespace-nowrap">
-              {currentPage + 1} de {totalPages || 1}
-            </span>
+            <div className="flex items-center gap-2 px-4 py-2 bg-muted rounded-lg">
+              <span className="text-sm font-semibold whitespace-nowrap">
+                Página {currentPage + 1} de {totalPages || 1}
+              </span>
+            </div>
             <Button
               variant="outline"
               size="sm"
               onClick={() => handlePageChange(currentPage + 1)}
               disabled={currentPage === totalPages - 1 || totalPages === 0}
-              className="h-8 w-8 p-0"
+              className="h-9 w-9 p-0"
             >
               <ChevronRight className="h-4 w-4" />
             </Button>
@@ -1253,7 +1378,7 @@ const AppointmentsTable: React.FC = () => {
               size="sm"
               onClick={() => handlePageChange(totalPages - 1)}
               disabled={currentPage === totalPages - 1 || totalPages === 0}
-              className="h-8 w-8 p-0"
+              className="h-9 w-9 p-0"
             >
               <ChevronsRight className="h-4 w-4" />
             </Button>
@@ -1265,14 +1390,14 @@ const AppointmentsTable: React.FC = () => {
       <Dialog open={createDialog} onOpenChange={setCreateDialog}>
         <DialogContent className="sm:max-w-[600px]">
           <DialogHeader>
-            <DialogTitle>Nueva Cita</DialogTitle>
+            <DialogTitle className="text-2xl font-bold">Nueva Cita</DialogTitle>
             <DialogDescription>
-              Crea una nueva cita para un cliente
+              Completa la información para crear una nueva cita
             </DialogDescription>
           </DialogHeader>
-          <div className="grid gap-4 py-4">
-            <div className="grid gap-2">
-              <Label htmlFor="create-client">
+          <div className="grid gap-5 py-4">
+            <div className="grid gap-2.5">
+              <Label htmlFor="create-client" className="font-semibold">
                 Cliente <span className="text-red-500">*</span>
               </Label>
               <Popover
@@ -1284,7 +1409,7 @@ const AppointmentsTable: React.FC = () => {
                     variant="outline"
                     role="combobox"
                     aria-expanded={openClientCombobox}
-                    className="w-full justify-between"
+                    className="w-full justify-between h-11"
                   >
                     {createFormData.clientName || "Seleccionar cliente..."}
                     <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
@@ -1335,38 +1460,93 @@ const AppointmentsTable: React.FC = () => {
                 </PopoverContent>
               </Popover>
               {createFormData.clientId && (
-                <div className="flex items-center gap-2 text-xs text-green-600 dark:text-green-400 mt-1">
-                  <CheckCircle2 className="h-3 w-3" />
-                  <span>
+                <div className="flex items-center gap-2 text-xs text-emerald-600 dark:text-emerald-400 mt-1 bg-emerald-50 dark:bg-emerald-950/30 px-3 py-2 rounded-md">
+                  <CheckCircle2 className="h-3.5 w-3.5" />
+                  <span className="font-medium">
                     Cliente seleccionado: ID {createFormData.clientId}
                   </span>
                 </div>
               )}
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div className="grid gap-2">
-                <Label htmlFor="create-employedId">
-                  ID del Empleado (opcional)
-                </Label>
-                <Input
-                  id="create-employedId"
-                  type="number"
-                  placeholder="Ej: 1"
-                  value={createFormData.employedId}
-                  onChange={(e) =>
-                    setCreateFormData({
-                      ...createFormData,
-                      employedId: e.target.value,
-                    })
-                  }
-                />
-              </div>
+            <div className="grid gap-2.5">
+              <Label htmlFor="create-employed" className="font-semibold">
+                Empleado{" "}
+                <span className="text-muted-foreground text-xs font-normal">
+                  (opcional)
+                </span>
+              </Label>
+              <Popover
+                open={openEmployedCombobox}
+                onOpenChange={setOpenEmployedCombobox}
+              >
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    role="combobox"
+                    aria-expanded={openEmployedCombobox}
+                    className="w-full justify-between h-11"
+                  >
+                    {createFormData.employedName || "Seleccionar empleado..."}
+                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-full p-0">
+                  <Command>
+                    <CommandInput placeholder="Buscar empleado por nombre o ID..." />
+                    <CommandEmpty>
+                      {loadingEmployed
+                        ? "Cargando empleados..."
+                        : "No se encontraron empleados."}
+                    </CommandEmpty>
+                    <CommandGroup className="max-h-64 overflow-auto">
+                      {filterEmployeds("").map((employed) => (
+                        <CommandItem
+                          key={employed.id}
+                          value={`${employed.name} - ${employed.identificacion}`}
+                          onSelect={() => {
+                            setCreateFormData({
+                              ...createFormData,
+                              employedId: employed.id.toString(),
+                              employedName: `${employed.name} (ID: ${employed.identificacion})`,
+                            });
+                            setOpenEmployedCombobox(false);
+                          }}
+                        >
+                          <Check
+                            className={cn(
+                              "mr-2 h-4 w-4",
+                              createFormData.employedId ===
+                                employed.id.toString()
+                                ? "opacity-100"
+                                : "opacity-0"
+                            )}
+                          />
+                          <div className="flex flex-col">
+                            <span className="font-medium">{employed.name}</span>
+                            <span className="text-xs text-muted-foreground">
+                              ID: {employed.identificacion}
+                            </span>
+                          </div>
+                        </CommandItem>
+                      ))}
+                    </CommandGroup>
+                  </Command>
+                </PopoverContent>
+              </Popover>
+              {createFormData.employedId && (
+                <div className="flex items-center gap-2 text-xs text-emerald-600 dark:text-emerald-400 mt-1 bg-emerald-50 dark:bg-emerald-950/30 px-3 py-2 rounded-md">
+                  <CheckCircle2 className="h-3.5 w-3.5" />
+                  <span className="font-medium">
+                    Empleado seleccionado: ID {createFormData.employedId}
+                  </span>
+                </div>
+              )}
             </div>
 
             <div className="grid grid-cols-2 gap-4">
-              <div className="grid gap-2">
-                <Label htmlFor="create-date">
+              <div className="grid gap-2.5">
+                <Label htmlFor="create-date" className="font-semibold">
                   Fecha <span className="text-red-500">*</span>
                 </Label>
                 <Input
@@ -1379,10 +1559,11 @@ const AppointmentsTable: React.FC = () => {
                       appointmentDate: e.target.value,
                     })
                   }
+                  className="h-11"
                 />
               </div>
-              <div className="grid gap-2">
-                <Label htmlFor="create-time">
+              <div className="grid gap-2.5">
+                <Label htmlFor="create-time" className="font-semibold">
                   Hora <span className="text-red-500">*</span>
                 </Label>
                 <Input
@@ -1395,12 +1576,13 @@ const AppointmentsTable: React.FC = () => {
                       appointmentTime: e.target.value,
                     })
                   }
+                  className="h-11"
                 />
               </div>
             </div>
 
-            <div className="grid gap-2">
-              <Label htmlFor="create-ubicacion">
+            <div className="grid gap-2.5">
+              <Label htmlFor="create-ubicacion" className="font-semibold">
                 Ubicación <span className="text-red-500">*</span>
               </Label>
               <Input
@@ -1413,11 +1595,17 @@ const AppointmentsTable: React.FC = () => {
                     ubicacion: e.target.value,
                   })
                 }
+                className="h-11"
               />
             </div>
 
-            <div className="grid gap-2">
-              <Label htmlFor="create-details">Detalles (opcional)</Label>
+            <div className="grid gap-2.5">
+              <Label htmlFor="create-details" className="font-semibold">
+                Detalles{" "}
+                <span className="text-muted-foreground text-xs font-normal">
+                  (opcional)
+                </span>
+              </Label>
               <Textarea
                 id="create-details"
                 placeholder="Describe el servicio o trabajo a realizar..."
@@ -1429,11 +1617,12 @@ const AppointmentsTable: React.FC = () => {
                   })
                 }
                 rows={4}
+                className="resize-none"
               />
             </div>
           </div>
 
-          <DialogFooter>
+          <DialogFooter className="gap-2 sm:gap-0">
             <Button
               variant="outline"
               onClick={() => {
@@ -1442,6 +1631,7 @@ const AppointmentsTable: React.FC = () => {
                   clientId: "",
                   clientName: "",
                   employedId: "",
+                  employedName: "",
                   appointmentDate: "",
                   appointmentTime: "",
                   ubicacion: "",
@@ -1449,12 +1639,14 @@ const AppointmentsTable: React.FC = () => {
                 });
               }}
               disabled={creating}
+              className="h-11"
             >
               Cancelar
             </Button>
             <Button
               onClick={handleCreateAppointment}
               disabled={creating || !createFormData.clientId}
+              className="h-11 shadow-sm"
             >
               {creating ? (
                 <>
@@ -1473,15 +1665,19 @@ const AppointmentsTable: React.FC = () => {
       <Dialog open={editDialog} onOpenChange={setEditDialog}>
         <DialogContent className="sm:max-w-[600px]">
           <DialogHeader>
-            <DialogTitle>Editar Cita</DialogTitle>
+            <DialogTitle className="text-2xl font-bold">
+              Editar Cita
+            </DialogTitle>
             <DialogDescription>
               Modifica los detalles de la cita seleccionada
             </DialogDescription>
           </DialogHeader>
-          <div className="grid gap-4 py-4">
+          <div className="grid gap-5 py-4">
             <div className="grid grid-cols-2 gap-4">
-              <div className="grid gap-2">
-                <Label htmlFor="edit-date">Fecha</Label>
+              <div className="grid gap-2.5">
+                <Label htmlFor="edit-date" className="font-semibold">
+                  Fecha
+                </Label>
                 <Input
                   id="edit-date"
                   type="date"
@@ -1492,10 +1688,13 @@ const AppointmentsTable: React.FC = () => {
                       appointmentDate: e.target.value,
                     })
                   }
+                  className="h-11"
                 />
               </div>
-              <div className="grid gap-2">
-                <Label htmlFor="edit-time">Hora</Label>
+              <div className="grid gap-2.5">
+                <Label htmlFor="edit-time" className="font-semibold">
+                  Hora
+                </Label>
                 <Input
                   id="edit-time"
                   type="time"
@@ -1506,11 +1705,14 @@ const AppointmentsTable: React.FC = () => {
                       appointmentTime: e.target.value,
                     })
                   }
+                  className="h-11"
                 />
               </div>
             </div>
-            <div className="grid gap-2">
-              <Label htmlFor="edit-ubicacion">Ubicación</Label>
+            <div className="grid gap-2.5">
+              <Label htmlFor="edit-ubicacion" className="font-semibold">
+                Ubicación
+              </Label>
               <Input
                 id="edit-ubicacion"
                 value={editFormData.ubicacion}
@@ -1520,11 +1722,14 @@ const AppointmentsTable: React.FC = () => {
                     ubicacion: e.target.value,
                   })
                 }
+                className="h-11"
               />
             </div>
             <div className="grid grid-cols-2 gap-4">
-              <div className="grid gap-2">
-                <Label htmlFor="edit-estado">Estado</Label>
+              <div className="grid gap-2.5">
+                <Label htmlFor="edit-estado" className="font-semibold">
+                  Estado
+                </Label>
                 <Select
                   value={editFormData.appointmentState}
                   onValueChange={(value: AppointmentState) =>
@@ -1534,7 +1739,7 @@ const AppointmentsTable: React.FC = () => {
                     })
                   }
                 >
-                  <SelectTrigger id="edit-estado">
+                  <SelectTrigger id="edit-estado" className="h-11">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -1545,8 +1750,10 @@ const AppointmentsTable: React.FC = () => {
                   </SelectContent>
                 </Select>
               </div>
-              <div className="grid gap-2">
-                <Label htmlFor="edit-employedId">ID del Empleado</Label>
+              <div className="grid gap-2.5">
+                <Label htmlFor="edit-employedId" className="font-semibold">
+                  ID del Empleado
+                </Label>
                 <Input
                   id="edit-employedId"
                   type="number"
@@ -1558,11 +1765,14 @@ const AppointmentsTable: React.FC = () => {
                       employedId: e.target.value,
                     })
                   }
+                  className="h-11"
                 />
               </div>
             </div>
-            <div className="grid gap-2">
-              <Label htmlFor="edit-details">Detalles</Label>
+            <div className="grid gap-2.5">
+              <Label htmlFor="edit-details" className="font-semibold">
+                Detalles
+              </Label>
               <Textarea
                 id="edit-details"
                 value={editFormData.details}
@@ -1570,18 +1780,24 @@ const AppointmentsTable: React.FC = () => {
                   setEditFormData({ ...editFormData, details: e.target.value })
                 }
                 rows={4}
+                className="resize-none"
               />
             </div>
           </div>
-          <DialogFooter>
+          <DialogFooter className="gap-2 sm:gap-0">
             <Button
               variant="outline"
               onClick={() => setEditDialog(false)}
               disabled={saving}
+              className="h-11"
             >
               Cancelar
             </Button>
-            <Button onClick={handleSaveEdit} disabled={saving}>
+            <Button
+              onClick={handleSaveEdit}
+              disabled={saving}
+              className="h-11 shadow-sm"
+            >
               {saving ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -1599,17 +1815,20 @@ const AppointmentsTable: React.FC = () => {
       <Dialog open={deleteDialog} onOpenChange={setDeleteDialog}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>¿Eliminar cita?</DialogTitle>
-            <DialogDescription>
+            <DialogTitle className="text-xl font-bold">
+              ¿Eliminar cita?
+            </DialogTitle>
+            <DialogDescription className="pt-2">
               Esta acción no se puede deshacer. La cita será eliminada
               permanentemente del sistema.
             </DialogDescription>
           </DialogHeader>
-          <DialogFooter>
+          <DialogFooter className="gap-2 sm:gap-0 mt-4">
             <Button
               variant="outline"
               onClick={() => setDeleteDialog(false)}
               disabled={deleting}
+              className="h-11"
             >
               Cancelar
             </Button>
@@ -1617,6 +1836,7 @@ const AppointmentsTable: React.FC = () => {
               variant="destructive"
               onClick={handleConfirmDelete}
               disabled={deleting}
+              className="h-11"
             >
               {deleting ? (
                 <>

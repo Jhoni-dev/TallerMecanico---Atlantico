@@ -43,6 +43,7 @@ async function main() {
 
   // Limpiar base de datos
   console.log('🧹 Limpiando base de datos...');
+  await prisma.vehicleImage.deleteMany();
   await prisma.checklistItem.deleteMany();
   await prisma.vehicleChecklist.deleteMany();
   await prisma.passwordResetToken.deleteMany();
@@ -54,10 +55,12 @@ async function main() {
   await prisma.informationPieces.deleteMany();
   await prisma.invoiceDetail.deleteMany();
   await prisma.invoice.deleteMany();
-  await prisma.pieces.deleteMany();
-  await prisma.pieceCategory.deleteMany();
+  await prisma.servicesImages.deleteMany();
   await prisma.services.deleteMany();
   await prisma.serviceCategory.deleteMany();
+  await prisma.piecesImages.deleteMany();
+  await prisma.pieces.deleteMany();
+  await prisma.pieceCategory.deleteMany();
   await prisma.appointmentScheduling.deleteMany();
   await prisma.clientVehicle.deleteMany();
   await prisma.clientContact.deleteMany();
@@ -356,42 +359,69 @@ async function main() {
 
   // 11. Crear Checklists para algunas citas
   console.log('📋 Creando checklists de vehículos...');
-  const completedAppointments = appointments.filter(a => Math.random() > 0.5);
+  let checklistsCreados = 0;
 
-  for (const appointment of completedAppointments) {
-    const checklist = await prisma.vehicleChecklist.create({
-      data: {
-        checkType: 'Pre-servicio',
-        fuelLevel: Math.floor(Math.random() * 100),
-        mileage: `${Math.floor(50000 + Math.random() * 150000)} km`,
-        generalNotes: 'Vehículo en condiciones normales',
-        technicianName: sessions[Math.floor(Math.random() * sessions.length)].name,
-        appointmentId: appointment.id,
-      },
-    });
-
-    // Crear items del checklist
-    const checklistItems = [
-      { label: 'Luces delanteras', category: 'Luces', checked: true, condition: 'Bueno' },
-      { label: 'Luces traseras', category: 'Luces', checked: true, condition: 'Bueno' },
-      { label: 'Nivel de aceite', category: 'Fluidos', checked: true, condition: 'Adecuado' },
-      { label: 'Líquido de frenos', category: 'Fluidos', checked: true, condition: 'Adecuado' },
-      { label: 'Presión de llantas', category: 'Neumáticos', checked: true, condition: 'Correcto' },
-      { label: 'Frenos delanteros', category: 'Frenos', checked: true, condition: 'Bueno' },
-      { label: 'Frenos traseros', category: 'Frenos', checked: true, condition: 'Bueno' },
-      { label: 'Batería', category: 'Eléctrico', checked: true, condition: 'Bueno' },
-    ];
-
-    for (const item of checklistItems) {
-      await prisma.checklistItem.create({
-        data: {
-          ...item,
-          checklistId: checklist.id,
+  for (const appointment of appointments) {
+    // Solo crear checklist para algunas citas (50% de probabilidad)
+    if (Math.random() > 0.5) {
+      // Obtener el cliente de la cita con sus vehículos
+      const appointmentData = await prisma.appointmentScheduling.findUnique({
+        where: { id: appointment.id },
+        include: { 
+          author: { 
+            include: { 
+              clientVehicle: true 
+            } 
+          } 
         },
       });
+
+      // Si el cliente no tiene vehículos, saltar
+      if (!appointmentData?.author.clientVehicle || appointmentData.author.clientVehicle.length === 0) {
+        continue;
+      }
+
+      // Seleccionar un vehículo aleatorio del cliente
+      const vehiculo = appointmentData.author.clientVehicle[Math.floor(Math.random() * appointmentData.author.clientVehicle.length)];
+
+      const checklist = await prisma.vehicleChecklist.create({
+        data: {
+          checkType: 'Pre-servicio',
+          fuelLevel: Math.floor(Math.random() * 100),
+          mileage: `${Math.floor(50000 + Math.random() * 150000)} km`,
+          generalNotes: 'Vehículo en condiciones normales',
+          technicianName: sessions[Math.floor(Math.random() * sessions.length)].name,
+          appointmentId: appointment.id,
+          clientId: appointmentData.clientId,
+          sessionId: appointmentData.employedId,
+          vehicleId: vehiculo.id,
+        },
+      });
+
+      // Crear items del checklist
+      const checklistItems = [
+        { label: 'Luces delanteras', category: 'Luces', checked: true, condition: 'Bueno' },
+        { label: 'Luces traseras', category: 'Luces', checked: true, condition: 'Bueno' },
+        { label: 'Nivel de aceite', category: 'Fluidos', checked: true, condition: 'Adecuado' },
+        { label: 'Líquido de frenos', category: 'Fluidos', checked: true, condition: 'Adecuado' },
+        { label: 'Presión de llantas', category: 'Neumáticos', checked: true, condition: 'Correcto' },
+        { label: 'Frenos delanteros', category: 'Frenos', checked: true, condition: 'Bueno' },
+        { label: 'Frenos traseros', category: 'Frenos', checked: true, condition: 'Bueno' },
+        { label: 'Batería', category: 'Eléctrico', checked: true, condition: 'Bueno' },
+      ];
+
+      for (const item of checklistItems) {
+        await prisma.checklistItem.create({
+          data: {
+            ...item,
+            checklistId: checklist.id,
+          },
+        });
+      }
+      checklistsCreados++;
     }
   }
-  console.log(`✅ Checklists creados para ${completedAppointments.length} citas`);
+  console.log(`✅ ${checklistsCreados} checklists creados`);
 
   // 12. Crear Facturas
   console.log('💰 Creando facturas...');
@@ -533,6 +563,7 @@ async function main() {
   console.log(`   - ${services.length} servicios`);
   console.log(`   - ${pieces.length} piezas`);
   console.log(`   - ${appointments.length} citas`);
+  console.log(`   - ${checklistsCreados} checklists de vehículos`);
   console.log(`   - ${invoices.length} facturas`);
   console.log(`   - ${proveedoresData.length} proveedores`);
   console.log(`   - 100 logs del sistema`);
