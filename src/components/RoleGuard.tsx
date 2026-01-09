@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/usercontext";
 import { toast } from "sonner";
@@ -20,44 +20,63 @@ export function RoleGuard({
   children,
   redirectTo = "/dashboard/acceso-denegado",
 }: RoleGuardProps) {
-  const [userData, setUserData] = React.useState<User | null>(null);
+  const [userData, setUserData] = useState<User | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
   const { user } = useAuth();
+  const router = useRouter();
 
-  const fetchUser = async () => {
-    try {
-      const response = await apiFetch(`user/${user}`);
+  // ✅ TODOS LOS HOOKS AL INICIO
 
-      if (!response.ok)
-        throw new Error("Ha ocurrido un error en la captura del usuario");
+  // Fetch del usuario
+  useEffect(() => {
+    const fetchUser = async () => {
+      if (!user) {
+        setIsLoading(false);
+        return;
+      }
 
-      const data: User = await response.json();
+      try {
+        setIsLoading(true);
+        const response = await apiFetch(`user/${user}`);
 
-      setUserData(data);
-    } catch (error) {
-      toast.error(
-        error instanceof Error
-          ? error.message
-          : "Ha ocurrido un error inesperado"
-      );
-    }
-  };
+        if (!response.ok) {
+          throw new Error("Ha ocurrido un error en la captura del usuario");
+        }
 
-  React.useEffect(() => {
-    if (!user) return;
+        const data: User = await response.json();
+        setUserData(data);
+      } catch (error) {
+        toast.error(
+          error instanceof Error
+            ? error.message
+            : "Ha ocurrido un error inesperado"
+        );
+      } finally {
+        setIsLoading(false);
+      }
+    };
 
     fetchUser();
   }, [user]);
 
-  const router = useRouter();
-
+  // Validación de roles
   useEffect(() => {
-    if (!userData) return; // Espera que se cargue el usuario
-    if (!allowedRoles.includes(userData.role)) {
-      router.replace(redirectTo); // 🚫 Redirige si no tiene el rol permitido
-    }
-  }, [userData, router, allowedRoles, redirectTo]);
+    if (isLoading || !userData) return;
 
-  if (!userData || !allowedRoles.includes(userData.role)) return null;
+    if (!allowedRoles.includes(userData.role)) {
+      router.replace(redirectTo);
+    }
+  }, [userData, isLoading, router, allowedRoles, redirectTo]);
+
+  // ✅ RETURNS CONDICIONALES AL FINAL (después de todos los hooks)
+
+  if (isLoading) {
+    return null;
+  }
+
+  if (!userData || !allowedRoles.includes(userData.role)) {
+    return null;
+  }
 
   return <>{children}</>;
 }

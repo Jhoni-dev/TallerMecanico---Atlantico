@@ -3,7 +3,13 @@
 import Loader from "@/app/frontend/components/Loader";
 import { decodeJWT } from "@/lib/jwt";
 import { usePathname, useRouter } from "next/navigation";
-import { createContext, useContext, useEffect, useState } from "react";
+import {
+  createContext,
+  startTransition,
+  useContext,
+  useEffect,
+  useState,
+} from "react";
 import { toast } from "sonner";
 
 interface AuthContextType {
@@ -20,20 +26,16 @@ const MAIN_ROUTE = "/auth/login";
 const PUBLIC_ROUTES = ["/auth/login", "/auth/restaurar", "/auth/confirmar"];
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
+  // ✅ TODOS LOS HOOKS AL INICIO
   const [token, setToken] = useState<string | null>(null);
   const [user, setUser] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [mounted, setMounted] = useState(false);
+
   const router = useRouter();
   const pathname = usePathname();
 
+  // Effect 2: Verificar autenticación (solo en el cliente)
   useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  useEffect(() => {
-    if (!mounted) return;
-
     const verifyAuth = async () => {
       const isPublicRoute = PUBLIC_ROUTES.includes(pathname);
 
@@ -50,7 +52,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         storedToken === "null"
       ) {
         setIsLoading(false);
-        router.replace(MAIN_ROUTE);
+
+        setTimeout(() => {
+          router.replace(MAIN_ROUTE);
+        }, 0);
         return;
       }
 
@@ -88,7 +93,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         }
 
         if (!isPublicRoute) {
-          router.replace(MAIN_ROUTE);
+          setTimeout(() => {
+            router.replace(MAIN_ROUTE);
+          }, 0);
         }
       } finally {
         setIsLoading(false);
@@ -96,7 +103,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     };
 
     verifyAuth();
-  }, [mounted, pathname, router]);
+  }, [pathname, router]);
 
   const login = (newToken: string, userId: number) => {
     if (!newToken || !userId) {
@@ -115,7 +122,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     localStorage.setItem("user", JSON.stringify(userId));
 
     toast.success("Sesión iniciada correctamente");
-    router.replace("/dashboard");
+    setTimeout(() => {
+      router.replace("/dashboard");
+    }, 0);
   };
 
   const logout = () => {
@@ -125,20 +134,20 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     localStorage.removeItem("user");
 
     toast.success("Sesión cerrada");
-    router.replace(MAIN_ROUTE);
+    setTimeout(() => {
+      router.replace(MAIN_ROUTE);
+    }, 0);
   };
 
-  if (!mounted) {
-    return null;
-  }
-
-  if (isLoading) {
-    return <Loader fullScreen size="xl" text="Verificando sesión..." />;
-  }
-
+  // ✅ IMPORTANTE: Siempre renderizar el Provider para evitar errores de hidratación
+  // Solo cambiar el contenido interior
   return (
     <AuthContext.Provider value={{ user, token, login, logout, isLoading }}>
-      {children}
+      {isLoading ? (
+        <Loader fullScreen size="xl" text="Verificando sesión..." />
+      ) : (
+        children
+      )}
     </AuthContext.Provider>
   );
 };
