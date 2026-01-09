@@ -13,7 +13,7 @@ import {
 import { NavDocuments } from "@/components/nav-documents";
 import { NavMain } from "@/components/nav-main";
 import { NavSecondary } from "@/components/nav-secondary";
-import { NavUser } from "@/components/nav-user";
+import { NavUser } from "@/app/frontend/components/user-menu";
 import {
   Sidebar,
   SidebarContent,
@@ -65,7 +65,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
   React.useEffect(() => {
     if (!user) return;
-
+    
     fetchUser();
   }, [user]);
 

@@ -46,12 +46,15 @@ export async function GET(req: NextRequest, context: { params: Promise<{ id: str
 }
 
 
-export async function PUT(request: NextRequest) {
+export async function PUT(request: NextRequest, context: { params: Promise<{ id: string }> }) {
   try {
     const newSession: UpdateUser = await request.json();
-    console.log(newSession)
-    const email = await newSession.id;
-    const data = await updateById(email, newSession);
+    const { id } = await context.params;
+    const objectId = await newSession.id;
+
+    const selectId = objectId || parseInt(id, 10);
+
+    const data = await updateById(selectId, newSession);
 
     return NextResponse.json(data, { status: 200 });
   } catch (error) {

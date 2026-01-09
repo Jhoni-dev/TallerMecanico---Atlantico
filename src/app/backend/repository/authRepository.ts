@@ -185,7 +185,8 @@ export const authRepository = {
       });
 
       return result ? true : false;
-    } catch {
+    } catch (error) {
+      console.log(error)
       throw new Error("Error en la actualizacion de campos");
     }
   },

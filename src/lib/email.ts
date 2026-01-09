@@ -62,7 +62,7 @@ export async function sendPasswordResetEmail(
 
   try {
     const { data, error } = await resend.emails.send({
-      from: 'Talleres del Atlántico <no-reply@talleresatlantico.com>',
+      from: 'Talleres del Atlántico <onboarding@resend.dev>',
       to: email,
       subject: '🔐 Recuperación de Contraseña - Talleres del Atlántico',
       react: React.createElement(PasswordResetEmail, { resetLink, userName }),
@@ -92,7 +92,7 @@ export async function sendPasswordChangedEmail(
 ) {
   try {
     const { data, error } = await resend.emails.send({
-      from: 'Talleres del Atlántico <no-reply@talleresatlantico.com>',
+      from: 'Talleres del Atlántico <onboarding@resend.dev>',
       to: email,
       subject: '✅ Contraseña Actualizada - Talleres del Atlántico',
       react: React.createElement(PasswordChangedEmail, {
@@ -129,7 +129,7 @@ export async function sendWelcomeEmail(
 
   try {
     const { data, error } = await resend.emails.send({
-      from: 'Talleres del Atlántico <no-reply@talleresatlantico.com>',
+      from: 'Talleres del Atlántico <onboarding@resend.dev>',
       to: email,
       subject: 'Bienvenido a Talleres del Atlántico',
       react: React.createElement(WelcomeEmail, { userName, rol, loginUrl }),
@@ -192,7 +192,7 @@ export async function sendInvoiceEmail(invoiceData: GetInvoiceClient) {
 
   try {
     const { data, error } = await resend.emails.send({
-      from: 'Talleres del Atlántico <no-reply@talleresatlantico.com>',
+      from: 'Talleres del Atlántico <onboarding@resend.dev>',
       to: clientEmail,
       subject: `Tu Factura #${converter.id} - Talleres del Atlántico`,
       react: React.createElement(InvoiceEmail, {

@@ -16,24 +16,25 @@ export default function ProgressIndicator({
 }: ProgressIndicatorProps) {
   return (
     <div>
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex items-center justify-between mb-6">
         <h3 className="text-lg font-semibold">Progreso</h3>
         <Badge variant="outline" className="text-sm">
           Paso {currentStep} de {totalSteps}
         </Badge>
       </div>
 
-      <div className="mb-2">
-        <div className="flex items-center justify-between">
+      {/* Pasos con líneas integradas */}
+      <div className="mb-4">
+        <div className="flex items-center">
           {Array.from({ length: totalSteps }, (_, i) => i + 1).map((step) => (
-            <div key={step} className="flex items-center flex-1">
+            <div key={step} className="flex items-center flex-1 last:flex-none">
               <div
                 className={`flex items-center justify-center w-8 h-8 rounded-full border-2 font-semibold text-sm transition-all ${
                   step < currentStep
                     ? "bg-primary border-primary text-primary-foreground"
                     : step === currentStep
                       ? "bg-primary border-primary text-primary-foreground ring-4 ring-primary/20"
-                      : "bg-muted border-muted-foreground/20 text-muted-foreground"
+                      : "bg-background border-muted-foreground/30 text-muted-foreground"
                 }`}
               >
                 {step < currentStep ? <Check className="h-4 w-4" /> : step}
@@ -50,16 +51,23 @@ export default function ProgressIndicator({
         </div>
       </div>
 
-      <div className="flex items-center justify-between text-xs text-muted-foreground">
+      {/* Labels de pasos */}
+      <div className="grid gap-2" style={{ gridTemplateColumns: `repeat(${totalSteps}, 1fr)` }}>
         {stepLabels.map((label, index) => (
-          <span
+          <div
             key={index}
-            className={
-              currentStep === index + 1 ? "font-semibold text-foreground" : ""
-            }
+            className="text-center"
           >
-            {label}
-          </span>
+            <span
+              className={`text-xs transition-all ${
+                currentStep === index + 1 
+                  ? "font-semibold text-foreground" 
+                  : "text-muted-foreground"
+              }`}
+            >
+              {label}
+            </span>
+          </div>
         ))}
       </div>
     </div>
