@@ -246,23 +246,23 @@ model PasswordResetToken {
 }
 
 model VehicleChecklist {
-  id             Int                    @id @default(autoincrement())
-  checkType      String
-  fuelLevel      Int
-  mileage        String
-  generalNotes   String
-  technicianName String
-  completedAt    DateTime               @default(now())
-  appointmentId  Int?
-  clientId       Int?
-  sessionId      Int?
-  vehicleId      Int
-  items          ChecklistItem[]
-  appointment    AppointmentScheduling? @relation(fields: [appointmentId], references: [id])
-  client         Client?                @relation(fields: [clientId], references: [id])
-  session        Session?               @relation(fields: [sessionId], references: [id])
-  clientVehicle  ClientVehicle          @relation(fields: [vehicleId], references: [id])
-  vehicleImage   VehicleImage[]
+  id              Int                    @id @default(autoincrement())
+  checkType       String
+  fuelLevel       Int
+  mileage         String
+  generalNotes    String
+  technicianName  String
+  completedAt     DateTime               @default(now())
+  appointmentId   Int?
+  clientId        Int?
+  sessionId       Int?
+  clientVehicleId Int
+  items           ChecklistItem[]
+  appointment     AppointmentScheduling? @relation(fields: [appointmentId], references: [id])
+  client          Client?                @relation(fields: [clientId], references: [id])
+  clientVehicle   ClientVehicle          @relation(fields: [clientVehicleId], references: [id])
+  session         Session?               @relation(fields: [sessionId], references: [id])
+  vehicleImage    VehicleImage[]
 }
 
 model VehicleImage {

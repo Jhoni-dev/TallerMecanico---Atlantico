@@ -3,7 +3,6 @@ import { hashed, verifyHash } from "../../../lib/argon";
 import { generateToken } from "@/lib/jwt";
 import { cleanData } from "../utils/cleanData";
 import { CreateSession, GetSession, UpdateUser } from "../types/models/entity";
-import { toLowerCaseDeepRecord } from "../utils/filtersRepository"
 import { sendWelcomeEmail } from "@/lib/email";
 import { isOnlyNumbers, isValidEmail } from "../utils/entryData";
 
@@ -25,7 +24,7 @@ export async function getSessionById(id: string): Promise<GetSession | null> {
     return user;
 }
 
-export async function getSessionByEmail(email: string, password: string): Promise<Record<string, unknown>> {
+export async function getSessionByEmail(email: string, password: string): Promise<Record<string, unknown> | null> {
     const user = await authRepository.findByEmail(email);
 
     if (!user) {
@@ -44,15 +43,12 @@ export async function getSessionByEmail(email: string, password: string): Promis
 
     const { credentials, ...userWithoutPassword } = user;
 
-    const parseInformation = (data: Record<string, unknown>) => {
-        return {
-            id: data.id
-        }
+    const parseInformation = {
+        sub: user.id.toString(),
+        id: user.id
     }
 
-    const dataForToken = parseInformation(userWithoutPassword);
-
-    const token = await generateToken(dataForToken);
+    const token = await generateToken(parseInformation);
 
     return { token };
 }

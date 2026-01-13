@@ -6,10 +6,6 @@ const expiresIn = process.env.JWT_EXPIRES_IN || "1h";
 export interface AppJWTPayload extends JWTPayload {
   sub: string;
   id?: number;
-  name?: string;
-  identificacion?: string;
-  email?: string;
-  role?: string;
 }
 
 export async function generateToken(payload: AppJWTPayload): Promise<string> {

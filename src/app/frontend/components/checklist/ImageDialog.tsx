@@ -7,14 +7,13 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Download, X, ChevronLeft, ChevronRight } from "lucide-react";
-import { VehicleImageFromBackend } from "@/app/frontend/types/checklist.types";
+import { VehicleImage } from "@prisma/client";
 
 interface ImageDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  images: VehicleImageFromBackend[];
+  images: VehicleImage[];
   currentIndex: number;
   onIndexChange: (index: number) => void;
 }

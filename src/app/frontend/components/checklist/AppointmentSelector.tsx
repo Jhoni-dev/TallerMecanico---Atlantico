@@ -68,7 +68,7 @@ interface GetSession {
 
 interface AppointmentSelectorProps {
   appointments: Appointment[];
-  selectedAppointmentId: number | null;
+  selectedAppointmentId: number | undefined | null;
   onSelectAppointment: (appointmentId: number | null) => void;
   manualClientData?: ManualClientData;
   onManualClientChange?: (data: ManualClientData) => void;

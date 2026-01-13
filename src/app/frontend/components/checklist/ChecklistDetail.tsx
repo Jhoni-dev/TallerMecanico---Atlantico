@@ -65,6 +65,16 @@ export default function ChecklistDetail({
     );
   }
 
+  // Convertir las imágenes al formato esperado por ImageGallery
+  const formattedImages =
+    checklist.vehicleImage?.map((img) => ({
+      ...img,
+      createAt:
+        img.createAt instanceof Date
+          ? img.createAt.toISOString()
+          : img.createAt,
+    })) || [];
+
   return (
     <Card className="dark:bg-gray-900 dark:border-gray-800">
       <CardHeader className="pb-4">
@@ -130,9 +140,9 @@ export default function ChecklistDetail({
           </div>
 
           {/* Fotos del vehículo */}
-          {checklist.vehicleImage && checklist.vehicleImage.length > 0 && (
+          {formattedImages.length > 0 && (
             <ImageGallery
-              images={checklist.vehicleImage}
+              images={formattedImages}
               onImageClick={onImageClick}
             />
           )}

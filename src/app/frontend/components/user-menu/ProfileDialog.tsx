@@ -33,7 +33,7 @@ interface ProfileDialogProps {
   isSaving: boolean;
   hasChanges: boolean;
   onInputChange: (field: keyof UpdateUserData, value: string) => void;
-  onSave: () => Promise<boolean>;
+  onSave: () => Promise<boolean | undefined>;
   onCancel: () => void;
 }
 

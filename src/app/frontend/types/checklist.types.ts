@@ -91,7 +91,7 @@ export interface VehicleChecklist {
     vehicleId?: number | null;
     appointment?: Appointment;
     items?: ChecklistItem[];
-    vehicleImage?: VehicleImage[];
+    vehicleImage?: VehicleImage[] | [];
 
     // Datos del backend cuando es modo manual
     client?: {

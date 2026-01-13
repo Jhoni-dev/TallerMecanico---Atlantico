@@ -11,7 +11,7 @@ import { GetClient, GetSession } from "@/app/backend/types/models/entity";
 
 interface Step1AppointmentProps {
   appointments: Appointment[];
-  selectedAppointmentId: number | null;
+  selectedAppointmentId: number | undefined | null;
   onSelectAppointment: (appointmentId: number | null) => void;
   clients: GetClient[];
   mechanics: GetSession[];
