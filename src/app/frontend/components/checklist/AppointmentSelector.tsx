@@ -28,6 +28,7 @@ import {
   User,
   UserPlus,
   Briefcase,
+  X,
 } from "lucide-react";
 import {
   Appointment,
@@ -205,6 +206,69 @@ export default function AppointmentSelector({
 
       setOpenMechanic(false);
       toast.success("Mecánico seleccionado");
+    }
+  };
+
+  // Nueva función para manejar cambios en los inputs del cliente
+  const handleClientInputChange = (
+    field: keyof ManualClientData,
+    value: string
+  ) => {
+    // Si hay un cliente seleccionado, deseleccionarlo
+    if (selectedClientId) {
+      onSelectClient?.(null);
+    }
+
+    // Actualizar los datos del cliente
+    if (onManualClientChange && manualClientData) {
+      if (field === "clientContact") {
+        // No se usa directamente, pero mantener por compatibilidad
+        return;
+      }
+
+      onManualClientChange({
+        ...manualClientData,
+        [field]: value,
+      });
+    }
+  };
+
+  // Nueva función para manejar cambios en el contacto del cliente
+  const handleClientContactChange = (
+    contactField: "phoneNumber" | "email",
+    value: string
+  ) => {
+    // Si hay un cliente seleccionado, deseleccionarlo
+    if (selectedClientId) {
+      onSelectClient?.(null);
+    }
+
+    // Actualizar los datos del contacto
+    if (onManualClientChange && manualClientData) {
+      onManualClientChange({
+        ...manualClientData,
+        clientContact: {
+          ...manualClientData.clientContact,
+          [contactField]: value,
+        },
+      });
+    }
+  };
+
+  // Función para limpiar la selección del cliente
+  const handleClearClientSelection = () => {
+    onSelectClient?.(null);
+    if (onManualClientChange) {
+      onManualClientChange({
+        id: 0,
+        fullName: "",
+        fullSurname: "",
+        identified: "",
+        clientContact: {
+          phoneNumber: "",
+          email: "",
+        },
+      });
     }
   };
 
@@ -452,11 +516,24 @@ export default function AppointmentSelector({
               </Popover>
 
               {selectedClient && (
-                <div className="p-3 bg-blue-100 dark:bg-blue-900/20 rounded-md border border-blue-200 dark:border-blue-800">
-                  <p className="text-xs text-blue-700 dark:text-blue-400">
-                    ✓ Cliente seleccionado. Los datos se han rellenado
-                    automáticamente.
+                <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-md border border-blue-200 dark:border-blue-800 flex items-center justify-between gap-2">
+                  <p className="text-xs text-blue-700 dark:text-blue-400 flex items-center gap-2">
+                    <CheckCircle2 className="h-4 w-4 flex-shrink-0" />
+                    <span>
+                      Cliente seleccionado:{" "}
+                      <strong>
+                        {selectedClient.fullName} {selectedClient.fullSurname}
+                      </strong>
+                    </span>
                   </p>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleClearClientSelection}
+                    className="h-6 w-6 p-0 hover:bg-blue-200 dark:hover:bg-blue-800"
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
                 </div>
               )}
             </div>
@@ -480,10 +557,7 @@ export default function AppointmentSelector({
                     placeholder="Juan"
                     value={manualClientData?.fullName || ""}
                     onChange={(e) =>
-                      onManualClientChange?.({
-                        ...manualClientData!,
-                        fullName: e.target.value,
-                      })
+                      handleClientInputChange("fullName", e.target.value)
                     }
                     className="dark:bg-gray-800 dark:border-gray-700"
                   />
@@ -501,10 +575,7 @@ export default function AppointmentSelector({
                     placeholder="Pérez"
                     value={manualClientData?.fullSurname || ""}
                     onChange={(e) =>
-                      onManualClientChange?.({
-                        ...manualClientData!,
-                        fullSurname: e.target.value,
-                      })
+                      handleClientInputChange("fullSurname", e.target.value)
                     }
                     className="dark:bg-gray-800 dark:border-gray-700"
                   />
@@ -519,10 +590,7 @@ export default function AppointmentSelector({
                     placeholder="1234567890"
                     value={manualClientData?.identified || ""}
                     onChange={(e) =>
-                      onManualClientChange?.({
-                        ...manualClientData!,
-                        identified: e.target.value,
-                      })
+                      handleClientInputChange("identified", e.target.value)
                     }
                     className="dark:bg-gray-800 dark:border-gray-700"
                   />
@@ -537,13 +605,7 @@ export default function AppointmentSelector({
                     placeholder="3001234567"
                     value={manualClientData?.clientContact?.phoneNumber || ""}
                     onChange={(e) =>
-                      onManualClientChange?.({
-                        ...manualClientData!,
-                        clientContact: {
-                          ...manualClientData?.clientContact,
-                          phoneNumber: e.target.value,
-                        },
-                      })
+                      handleClientContactChange("phoneNumber", e.target.value)
                     }
                     className="dark:bg-gray-800 dark:border-gray-700"
                   />
@@ -559,13 +621,7 @@ export default function AppointmentSelector({
                     placeholder="cliente@ejemplo.com"
                     value={manualClientData?.clientContact?.email || ""}
                     onChange={(e) =>
-                      onManualClientChange?.({
-                        ...manualClientData!,
-                        clientContact: {
-                          ...manualClientData?.clientContact,
-                          email: e.target.value,
-                        },
-                      })
+                      handleClientContactChange("email", e.target.value)
                     }
                     className="dark:bg-gray-800 dark:border-gray-700"
                   />
